@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shuttle Tracker — UI Kit</title>
+  <link rel="stylesheet" href="../../colors_and_type.css"/>
+  <link rel="stylesheet" href="app.css"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    body {
+      background: #E8EAED;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 0;
+    }
+    .stage {
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+    .screen-picker {
+      display: flex; gap: 6px; background: #fff; padding: 6px;
+      border-radius: 999px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .screen-picker button {
+      border: 0; background: transparent; padding: 8px 16px;
+      border-radius: 999px; cursor: pointer;
+      font-family: var(--font-sans); font-size: 14px; font-weight: 600;
+      color: var(--fg-3);
+      transition: all 160ms ease;
+    }
+    .screen-picker button.active {
+      background: #191F28; color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="icon-sprite" style="display:none"></div>
+
+  <script>
+    /* Inline the icon sprite so <use href="#id"> works reliably
+       (external refs don't rasterize in html-to-image screenshots). */
+    fetch('../../assets/icons.svg').then(r => r.text()).then(t => {
+      document.getElementById('icon-sprite').innerHTML = t;
+    });
+  </script>
+
+  <script type="text/babel" src="Frame.jsx"></script>
+  <script type="text/babel" src="AuthScreen.jsx"></script>
+  <script type="text/babel" src="MapScreen.jsx"></script>
+  <script type="text/babel" src="FriendsScreen.jsx"></script>
+  <script type="text/babel" src="ProfileScreen.jsx"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [authed, setAuthed] = useState(true);
+      const [tab, setTab] = useState('map');
+      const [toast, setToast] = useState(null);
+
+      useEffect(() => {
+        if (!toast) return;
+        const t = setTimeout(() => setToast(null), 1800);
+        return () => clearTimeout(t);
+      }, [toast]);
+
+      const screens = [
+        { id: 'auth', label: '로그인' },
+        { id: 'map', label: '지도 · ETA' },
+        { id: 'friends', label: '친구' },
+        { id: 'profile', label: '나의 셔틀' },
+      ];
+
+      // External picker choice -> stores in `tab` for the 4 bottom-tab screens,
+      // but auth is special: if user picks auth, show auth; otherwise show the chosen tab.
+      const [picked, setPicked] = useState('map');
+      const showAuth = picked === 'auth';
+
+      return (
+        <div className="stage">
+          <div className="screen-picker">
+            {screens.map(s => (
+              <button key={s.id}
+                className={picked === s.id ? 'active' : ''}
+                onClick={() => { setPicked(s.id); if (s.id !== 'auth') setTab(s.id); }}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          <AppFrame>
+            {showAuth && <AuthScreen onDone={() => { setPicked('map'); setTab('map'); }}/>}
+
+            {!showAuth && tab === 'map'     && <MapScreen/>}
+            {!showAuth && tab === 'friends' && <FriendsScreen onToast={setToast}/>}
+            {!showAuth && tab === 'profile' && <ProfileScreen onToast={setToast}/>}
+            {!showAuth && tab === 'search'  && <SearchScreen/>}
+
+            {!showAuth && <BottomNav active={tab} onChange={setTab}/>}
+
+            <Toast message={toast} show={!!toast}/>
+          </AppFrame>
+        </div>
+      );
+    }
+
+    // Simple search screen inline (small enough)
+    function SearchScreen() {
+      const [q, setQ] = useState('');
+      const recents = ['민지', '1호차', '효덕초 후문', '승호'];
+      const routes = [
+        { name: '1호차 · 학교 ↔ 시청', stops: 8, status: '운행 중' },
+        { name: '2호차 · 기숙사 ↔ 역', stops: 6, status: '운행 중' },
+        { name: '야간편 · 학교 ↔ 시내', stops: 5, status: '준비 중' },
+      ];
+      return (
+        <div className="app-body">
+          <div className="search-header">
+            <div className="wrap">
+              <span className="icon"><Icon name="search" size={18} color="var(--fg-3)"/></span>
+              <input className="search-input" placeholder="친구·노선 검색" autoFocus
+                value={q} onChange={e => setQ(e.target.value)}/>
+            </div>
+            <button className="btn btn-ghost btn-sm">취소</button>
+          </div>
+
+          {q.length === 0 && (
+            <>
+              <div style={{ padding: '16px 20px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg-2)' }}>최근 검색</div>
+                <button style={{ border: 0, background: 'transparent', color: 'var(--fg-3)', fontSize: 12, cursor: 'pointer' }}>전체 삭제</button>
+              </div>
+              <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {recents.map(r => (
+                  <button key={r} className="chip">{r} <Icon name="close" size={14}/></button>
+                ))}
+              </div>
+
+              <hr className="divider-thick"/>
+
+              <div style={{ padding: '16px 20px 8px', fontSize: 13, fontWeight: 700, color: 'var(--fg-2)' }}>
+                운행 중인 노선
+              </div>
+              {routes.map(r => (
+                <div key={r.name} className="list-item">
+                  <span style={{
+                    width: 40, height: 40, borderRadius: 10, background: 'var(--carrot-50)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <Icon name="bus" size={22} color="var(--carrot-500)"/>
+                  </span>
+                  <div className="body">
+                    <div className="title">{r.name}</div>
+                    <div className="subtitle">경유지 {r.stops}개 · {r.status}</div>
+                  </div>
+                  <Icon name="chevron-right" size={18} color="var(--fg-4)"/>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+/* =========================================================
+   Shuttle Tracker — Design Foundations
+   Inspired by Karrot (당근) visual language
+   ========================================================= */
+
+/* Pretendard — the de facto Korean web font for modern apps.
+   Used by Karrot, Toss, and most Korean mobile products. */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+:root {
+  /* ---------- BRAND PALETTE ---------- */
+  /* Karrot's signature orange — warm, friendly, high-visibility */
+  --carrot-50:  #FFF4EC;
+  --carrot-100: #FFE4D0;
+  --carrot-200: #FFC8A1;
+  --carrot-300: #FFA66B;
+  --carrot-400: #FF8A3D;
+  --carrot-500: #FF6F0F;   /* primary */
+  --carrot-600: #E8580F;
+  --carrot-700: #C2460A;
+  --carrot-800: #8F3206;
+  --carrot-900: #5C2003;
+
+  /* ---------- NEUTRALS ---------- */
+  --gray-00: #FFFFFF;
+  --gray-50: #FAFAFA;
+  --gray-100: #F2F3F6;
+  --gray-200: #E8EAED;
+  --gray-300: #D1D6DB;
+  --gray-400: #B0B8C1;
+  --gray-500: #8B95A1;
+  --gray-600: #6B7684;
+  --gray-700: #4E5968;
+  --gray-800: #333D4B;
+  --gray-900: #191F28;
+
+  /* ---------- SEMANTIC (route / map palette) ---------- */
+  --blue-500:   #3182F6;   /* friend marker — unselected */
+  --blue-100:   #DCECFF;
+  --red-500:    #F04438;   /* friend marker — selected */
+  --red-100:    #FFE5E3;
+  --green-500:  #12B886;   /* on-time / active */
+  --green-100:  #D9F7EB;
+  --yellow-500: #FFC839;   /* ETA highlight */
+  --yellow-100: #FFF4D0;
+
+  /* ---------- FOREGROUND / BACKGROUND TOKENS ---------- */
+  --fg-1: var(--gray-900);      /* primary text / titles */
+  --fg-2: var(--gray-700);      /* body */
+  --fg-3: var(--gray-500);      /* captions / metadata */
+  --fg-4: var(--gray-400);      /* placeholder / disabled */
+  --fg-inverse: var(--gray-00);
+
+  --bg-1: var(--gray-00);       /* page / card */
+  --bg-2: var(--gray-50);       /* app background */
+  --bg-3: var(--gray-100);      /* subtle sections / chips */
+  --bg-4: var(--gray-200);      /* dividers / inputs idle */
+
+  --brand-fg: var(--carrot-500);
+  --brand-bg: var(--carrot-500);
+  --brand-bg-weak: var(--carrot-50);
+  --brand-press: var(--carrot-600);
+
+  --border: var(--gray-200);
+  --border-strong: var(--gray-300);
+  --divider: var(--gray-100);
+
+  /* ---------- RADIUS ---------- */
+  --r-1: 4px;
+  --r-2: 8px;
+  --r-3: 12px;    /* default cards */
+  --r-4: 16px;
+  --r-5: 20px;
+  --r-pill: 999px;
+
+  /* ---------- SPACING (4pt grid) ---------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+  --s-10: 64px;
+
+  /* ---------- ELEVATION ---------- */
+  /* Karrot keeps elevation minimal — a single soft shadow for floating sheets. */
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04), 0 1px 1px rgba(0,0,0,.02);
+  --shadow-2: 0 4px 12px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+  --shadow-3: 0 12px 32px rgba(0,0,0,.10), 0 4px 8px rgba(0,0,0,.06);
+
+  /* ---------- MOTION ---------- */
+  --ease-standard: cubic-bezier(.2,.0,.0,1);
+  --ease-emphasized: cubic-bezier(.2,.0,.1,1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+
+  /* ---------- TYPE ---------- */
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+               'Apple SD Gothic Neo', 'Malgun Gothic', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale — based on Karrot's mobile title/body system */
+  --t-display-size: 32px;   --t-display-lh: 40px;   --t-display-weight: 700;
+  --t-h1-size: 24px;        --t-h1-lh: 32px;        --t-h1-weight: 700;
+  --t-h2-size: 20px;        --t-h2-lh: 28px;        --t-h2-weight: 700;
+  --t-h3-size: 18px;        --t-h3-lh: 26px;        --t-h3-weight: 700;
+  --t-title-size: 16px;     --t-title-lh: 22px;     --t-title-weight: 600;
+  --t-body1-size: 16px;     --t-body1-lh: 24px;     --t-body1-weight: 400;
+  --t-body2-size: 14px;     --t-body2-lh: 20px;     --t-body2-weight: 400;
+  --t-caption-size: 13px;   --t-caption-lh: 18px;   --t-caption-weight: 400;
+  --t-micro-size: 11px;     --t-micro-lh: 14px;     --t-micro-weight: 500;
+  --t-button-size: 16px;    --t-button-lh: 20px;    --t-button-weight: 600;
+
+  /* Letter spacing — Korean text reads tighter than Latin */
+  --ls-tight: -0.02em;
+  --ls-base: -0.01em;
+  --ls-wide: 0.02em;
+}
+
+/* ---------- RESET / BASE ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: var(--fg-1);
+  background: var(--bg-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: var(--ls-base);
+}
+button { font-family: inherit; }
+input, textarea { font-family: inherit; }
+
+/* ---------- SEMANTIC TYPE CLASSES ---------- */
+.t-display { font-size: var(--t-display-size); line-height: var(--t-display-lh); font-weight: var(--t-display-weight); letter-spacing: var(--ls-tight); }
+.t-h1      { font-size: var(--t-h1-size);      line-height: var(--t-h1-lh);      font-weight: var(--t-h1-weight);      letter-spacing: var(--ls-tight); }
+.t-h2      { font-size: var(--t-h2-size);      line-height: var(--t-h2-lh);      font-weight: var(--t-h2-weight);      letter-spacing: var(--ls-tight); }
+.t-h3      { font-size: var(--t-h3-size);      line-height: var(--t-h3-lh);      font-weight: var(--t-h3-weight);      letter-spacing: var(--ls-base); }
+.t-title   { font-size: var(--t-title-size);   line-height: var(--t-title-lh);   font-weight: var(--t-title-weight);   letter-spacing: var(--ls-base); }
+.t-body1   { font-size: var(--t-body1-size);   line-height: var(--t-body1-lh);   font-weight: var(--t-body1-weight); }
+.t-body2   { font-size: var(--t-body2-size);   line-height: var(--t-body2-lh);   font-weight: var(--t-body2-weight); }
+.t-caption { font-size: var(--t-caption-size); line-height: var(--t-caption-lh); font-weight: var(--t-caption-weight); color: var(--fg-3); }
+.t-micro   { font-size: var(--t-micro-size);   line-height: var(--t-micro-lh);   font-weight: var(--t-micro-weight); letter-spacing: var(--ls-wide); text-transform: uppercase; color: var(--fg-3); }
+.t-button  { font-size: var(--t-button-size);  line-height: var(--t-button-lh);  font-weight: var(--t-button-weight); letter-spacing: var(--ls-base); }
+.t-mono    { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shuttle Tracker — UI Kit (Print)</title>
+  <link rel="stylesheet" href="../../colors_and_type.css"/>
+  <link rel="stylesheet" href="app.css"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #E8EAED; }
+    body {
+      font-family: var(--font-sans);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Screen view — stack pages vertically for easy skimming */
+    .page {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      box-sizing: border-box;
+      page-break-after: always;
+      break-after: page;
+    }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+
+    .page-header {
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+    .page-header .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--fg-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-variant-numeric: tabular-nums;
+    }
+    .page-header .title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--fg-1);
+      letter-spacing: -0.02em;
+    }
+    .page-header .hint {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--fg-4);
+    }
+
+    .phone-wrap { display: flex; justify-content: center; }
+
+    /* Print rules */
+    @media print {
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+      html, body { background: #fff !important; }
+      .page {
+        min-height: auto;
+        height: 277mm;          /* A4 minus margins */
+        padding: 0 !important;
+        page-break-after: always;
+        break-after: page;
+        justify-content: flex-start;
+        break-inside: avoid;
+      }
+      .page:last-child { page-break-after: auto; break-after: auto; }
+      .page-header { margin-bottom: 14px; max-width: none; }
+      .phone-wrap { flex: 1; align-items: center; display: flex; }
+      .app-frame {
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="icon-sprite" style="display:none"></div>
+
+  <script>
+    /* Inline the icon sprite synchronously before React renders. */
+    window.__iconSpriteReady = fetch('../../assets/icons.svg')
+      .then(r => r.text())
+      .then(t => { document.getElementById('icon-sprite').innerHTML = t; });
+  </script>
+
+  <script type="text/babel" src="Frame.jsx"></script>
+  <script type="text/babel" src="AuthScreen.jsx"></script>
+  <script type="text/babel" src="MapScreen.jsx"></script>
+  <script type="text/babel" src="FriendsScreen.jsx"></script>
+  <script type="text/babel" src="ProfileScreen.jsx"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const PAGES = [
+      { id: 'auth',    num: '01', title: '로그인 · 회원가입',       hint: '이메일 기반 간단 가입 · 위치 권한 사전 고지' },
+      { id: 'map',     num: '02', title: '지도 · ETA',              hint: '실시간 버스 위치, 친구 마커, 정류장 타임라인' },
+      { id: 'friends', num: '03', title: '친구',                     hint: '위치 공유 중인 친구 · 요청 · 검색' },
+      { id: 'profile', num: '04', title: '나의 셔틀',                hint: '위치 공유 토글 · 노선 · 설정' },
+    ];
+
+    function ScreenFor({ id }) {
+      if (id === 'auth')    return <AuthScreen onDone={()=>{}}/>;
+      if (id === 'map')     return <><MapScreen/><BottomNav active="map" onChange={()=>{}}/></>;
+      if (id === 'friends') return <><FriendsScreen onToast={()=>{}}/><BottomNav active="friends" onChange={()=>{}}/></>;
+      if (id === 'profile') return <><ProfileScreen onToast={()=>{}}/><BottomNav active="profile" onChange={()=>{}}/></>;
+      return null;
+    }
+
+    function PrintApp() {
+      return (
+        <>
+          {PAGES.map(p => (
+            <section key={p.id} className="page">
+              <div className="page-header">
+                <span className="label">{p.num}</span>
+                <span className="title">{p.title}</span>
+                <span className="hint">{p.hint}</span>
+              </div>
+              <div className="phone-wrap">
+                <AppFrame>
+                  <ScreenFor id={p.id}/>
+                </AppFrame>
+              </div>
+            </section>
+          ))}
+        </>
+      );
+    }
+
+    // Wait for icon sprite before first paint so icons render.
+    window.__iconSpriteReady.then(() => {
+      ReactDOM.createRoot(document.getElementById('root')).render(<PrintApp/>);
+    });
+  </script>
+
+  <script>
+    /* Auto-print once everything is ready:
+       - icon sprite fetched
+       - fonts loaded (Pretendard)
+       - babel JSX transformed and React committed
+       - small safety delay so layout settles */
+    (async () => {
+      try { await window.__iconSpriteReady; } catch {}
+      try { await document.fonts.ready; } catch {}
+      // React via Babel needs a beat to commit; poll for a mounted phone frame
+      const start = Date.now();
+      while (!document.querySelector('.app-frame') && Date.now() - start < 5000) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      await new Promise(r => setTimeout(r, 500));
+      window.print();
+    })();
+  </script>
+</body>
+</html>

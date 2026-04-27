@@ -36,6 +36,10 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
+# generated native folders (CNG — managed by EAS)
 /ios
 /android
+
+# Firebase credentials — manage via EAS Secrets
+google-services.json
+GoogleService-Info.plist
