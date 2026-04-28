@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8081/api/v1';
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8081/api/v1';
 
 type ApiResponse<T> =
   | { success: true; data: T }
