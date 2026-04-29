@@ -1,10 +1,10 @@
-import type { LoginResponse, RegisterResponse } from '@/services/api/auth';
+import type { LoginResponse, RegisterResponse } from "@/services/api/auth";
 
 export function login(email: string, _password: string): LoginResponse {
   return {
-    accessToken: 'mock-access-token',
-    refreshToken: 'mock-refresh-token',
-    user: { userId: 1, email, name: '홍길동', role: 'USER' },
+    accessToken: "mock-access-token",
+    refreshToken: "mock-refresh-token",
+    user: { userId: 1, email, name: "홍길동", role: "USER" },
   };
 }
 

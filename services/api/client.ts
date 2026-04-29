@@ -30,4 +30,6 @@ export const apiClient = {
     request<T>(path, { method: 'POST', body: JSON.stringify(body), token }),
   get: <T>(path: string, token?: string) =>
     request<T>(path, { method: 'GET', token }),
+  delete: <T>(path: string, token?: string) =>
+    request<T>(path, { method: 'DELETE', token }),
 };

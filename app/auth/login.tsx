@@ -146,7 +146,7 @@ export default function LoginScreen() {
 
             <View style={s.switchRow}>
               <Text style={s.switchText}>아직 계정이 없으신가요?</Text>
-              <TouchableOpacity onPress={() => router.push("/auth/signup")}>
+              <TouchableOpacity onPress={() => router.push("/auth/signup/landing")}>
                 <Text style={s.switchLink}>회원가입</Text>
               </TouchableOpacity>
             </View>

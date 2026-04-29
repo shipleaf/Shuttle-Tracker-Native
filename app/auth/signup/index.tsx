@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,33 +13,47 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { sendMattermostCode } from '@/services/api/auth';
+import StepBar from '@/components/StepBar';
 
 export default function SignupStep1Screen() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<'input' | 'verify'>('input');
+  const [code, setCode] = useState('');
+  const [seconds, setSeconds] = useState(300);
 
-  const isValid = email.includes('@') && webhookUrl.startsWith('https://');
+  useEffect(() => {
+    if (phase !== 'verify') return;
+    const id = setInterval(() => {
+      setSeconds(s => {
+        if (s <= 1) { clearInterval(id); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [phase]);
 
-  const handleSend = async () => {
-    if (!isValid || loading) return;
-    setLoading(true);
-    try {
-      await sendMattermostCode(email, webhookUrl);
-      router.push({ pathname: '/auth/signup/verify', params: { email } });
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '인증 코드 발송에 실패했습니다.';
-      Alert.alert('발송 실패', message);
-    } finally {
-      setLoading(false);
-    }
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+  const canSend = email.length > 0 && webhookUrl.length > 0;
+  const canVerify = code.length >= 4 && seconds > 0;
+
+  const handleSend = () => {
+    setPhase('verify');
+    setSeconds(300);
+    setCode('');
+  };
+
+  const handleVerify = () => {
+    router.push({ pathname: '/auth/signup/complete', params: { email } });
   };
 
   return (
     <SafeAreaView style={s.container}>
+      <StepBar total={2} current={1} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -50,27 +62,17 @@ export default function SignupStep1Screen() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 헤더 */}
           <View style={s.header}>
-            <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-              <Ionicons name="arrow-back" size={24} color="#111827" />
-            </TouchableOpacity>
-            <View style={s.iconBox}>
-              <Ionicons name="bus" size={40} color="#fff" />
-            </View>
-            <Text style={s.title}>{'계정을 만들어\n친구와 위치를 공유해요'}</Text>
+            <Text style={s.title}>Mattermost 인증</Text>
             <Text style={s.subtitle}>
-              친구에게 먼저 도착한 셔틀의 위치를 실시간으로 공유받아요.
+              인증 코드를 받을 이메일과 웹훅 URL을 입력해주세요.
             </Text>
           </View>
 
-          {/* 폼 */}
           <View style={s.form}>
-            <Text style={s.stepLabel}>1 / 3 — Mattermost 인증</Text>
-
             <View style={s.field}>
               <Text style={s.label}>이메일</Text>
-              <View style={s.inputRow}>
+              <View style={[s.inputRow, phase === 'verify' && s.inputRowDisabled]}>
                 <Ionicons name="mail-outline" size={18} color="#9CA3AF" style={s.inputIcon} />
                 <TextInput
                   style={s.input}
@@ -78,6 +80,7 @@ export default function SignupStep1Screen() {
                   placeholderTextColor="#9CA3AF"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={phase === 'input'}
                   value={email}
                   onChangeText={setEmail}
                 />
@@ -87,7 +90,7 @@ export default function SignupStep1Screen() {
             <View style={s.field}>
               <Text style={s.label}>Mattermost 웹훅 URL</Text>
               <Text style={s.hint}>SSAFY Mattermost → 통합 → 수신 웹훅에서 생성</Text>
-              <View style={s.inputRow}>
+              <View style={[s.inputRow, phase === 'verify' && s.inputRowDisabled]}>
                 <Ionicons name="link-outline" size={18} color="#9CA3AF" style={s.inputIcon} />
                 <TextInput
                   style={s.input}
@@ -95,33 +98,67 @@ export default function SignupStep1Screen() {
                   placeholderTextColor="#9CA3AF"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  editable={phase === 'input'}
                   value={webhookUrl}
                   onChangeText={setWebhookUrl}
                 />
               </View>
             </View>
+
+            {phase === 'verify' && (
+              <View style={s.field}>
+                <View style={s.codeHeader}>
+                  <Text style={s.label}>인증 코드</Text>
+                  <Text style={[s.timer, seconds === 0 && s.timerExpired]}>
+                    {formatTime(seconds)}
+                  </Text>
+                </View>
+                <View style={s.inputRow}>
+                  <Ionicons name="key-outline" size={18} color="#9CA3AF" style={s.inputIcon} />
+                  <TextInput
+                    style={[s.input, s.codeInput]}
+                    placeholder="12345"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="number-pad"
+                    maxLength={10}
+                    editable={seconds > 0}
+                    value={code}
+                    onChangeText={setCode}
+                    autoFocus
+                  />
+                </View>
+                {seconds === 0 && (
+                  <TouchableOpacity onPress={handleSend} style={s.resendBtn}>
+                    <Text style={s.resendText}>코드가 만료됐어요. </Text>
+                    <Text style={s.resendLink}>다시 받기</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
 
-          {/* 하단 */}
           <View style={s.footer}>
-            <TouchableOpacity
-              style={[s.primaryBtn, !isValid && s.primaryBtnDisabled]}
-              onPress={handleSend}
-              disabled={!isValid || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
+            {phase === 'input' ? (
+              <TouchableOpacity
+                style={[s.primaryBtn, !canSend && s.primaryBtnDisabled]}
+                onPress={handleSend}
+                disabled={!canSend}
+              >
                 <Text style={s.primaryBtnText}>인증 코드 받기</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={s.switchRow}>
-              <Text style={s.switchText}>이미 계정이 있으신가요?</Text>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={s.switchLink}>로그인</Text>
               </TouchableOpacity>
-            </View>
+            ) : (
+              <TouchableOpacity
+                style={[s.primaryBtn, !canVerify && s.primaryBtnDisabled]}
+                onPress={handleVerify}
+                disabled={!canVerify}
+              >
+                <Text style={s.primaryBtnText}>인증하기</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity style={s.ghostBtn} onPress={() => router.back()}>
+              <Text style={s.ghostBtnText}>뒤로가기</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -132,23 +169,8 @@ export default function SignupStep1Screen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: { padding: 24, paddingTop: 16 },
-  backBtn: { marginBottom: 20, alignSelf: 'flex-start', padding: 4 },
-  iconBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    backgroundColor: '#FF6F0F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: '#FF6F0F',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
     color: '#111827',
@@ -156,7 +178,6 @@ const s = StyleSheet.create({
   },
   subtitle: { fontSize: 15, color: '#6B7280', lineHeight: 22, letterSpacing: -0.2 },
   form: { paddingHorizontal: 20, flex: 1 },
-  stepLabel: { fontSize: 12, color: '#FF6F0F', fontWeight: '600', marginBottom: 20 },
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
   hint: { fontSize: 12, color: '#9CA3AF', marginBottom: 6 },
@@ -170,25 +191,39 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     height: 48,
   },
+  inputRowDisabled: { backgroundColor: '#F3F4F6', borderColor: '#E5E7EB' },
   inputIcon: { marginRight: 8 },
   input: { flex: 1, fontSize: 15, color: '#111827' },
-  footer: { padding: 20, paddingBottom: 24 },
+  codeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  codeInput: { fontSize: 20, fontWeight: '700', letterSpacing: 4 },
+  timer: { fontSize: 13, fontWeight: '600', color: '#FF6F0F' },
+  timerExpired: { color: '#EF4444' },
+  resendBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  resendText: { fontSize: 13, color: '#6B7280' },
+  resendLink: { fontSize: 13, color: '#FF6F0F', fontWeight: '700' },
+  footer: { padding: 20, paddingBottom: 28, gap: 10 },
   primaryBtn: {
     backgroundColor: '#FF6F0F',
     borderRadius: 14,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
   },
   primaryBtnDisabled: { backgroundColor: '#FED7B0' },
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: -0.3 },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  ghostBtn: {
+    height: 44,
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
   },
-  switchText: { fontSize: 14, color: '#374151' },
-  switchLink: { fontSize: 14, color: '#FF6F0F', fontWeight: '700', padding: 4 },
+  ghostBtnText: { fontSize: 14, color: '#9CA3AF', fontWeight: '500' },
 });
